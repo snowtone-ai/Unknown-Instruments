@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+.codegraph/
+.claude/settings.local.json
+docs/reference/myself-info.md
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
