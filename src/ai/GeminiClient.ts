@@ -12,8 +12,12 @@ export async function generateInstrument(userText: string, configuredApiKey?: st
   const body = {
     contents: [{ parts: [{ text: buildInstrumentPrompt(userText) }] }],
     generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: instrumentResponseSchema,
+      responseFormat: {
+        text: {
+          mimeType: 'application/json',
+          schema: instrumentResponseSchema,
+        },
+      },
     },
   };
 
@@ -29,16 +33,28 @@ export async function generateInstrument(userText: string, configuredApiKey?: st
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) throw new Error(`Gemini request failed with status ${response.status}`);
+      if (!response.ok) {
+        const message = `Gemini request failed with status ${response.status}`;
+        if (!isRetryableStatus(response.status)) throw new Error(message);
+        throw new RetryableGeminiError(message);
+      }
       const data = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
       const cleanJson = rawText.replace(/```json\s*|```\s*/g, '').trim();
+      if (!cleanJson) throw new Error('Gemini response did not include JSON text.');
       return validateAndClampInstrument(JSON.parse(cleanJson), userText);
     } catch (error) {
       lastError = error;
+      if (!(error instanceof RetryableGeminiError) || attempt === 2) break;
       await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
     }
   }
 
   throw lastError instanceof Error ? lastError : new Error('Gemini generation failed.');
+}
+
+class RetryableGeminiError extends Error {}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || (status >= 500 && status < 600);
 }

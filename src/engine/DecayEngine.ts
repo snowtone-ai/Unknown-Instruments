@@ -2,6 +2,16 @@ import type { FilterParams, Instrument, SynthParams } from '../types';
 import { clamp } from '../utils/clamp';
 import { calculateDecayFactor } from '../utils/decay';
 
+const SAFE_DECAY_PATHS = new Set([
+  'synth.attack',
+  'synth.decay',
+  'synth.sustain',
+  'synth.release',
+  'synth.baseFrequency',
+  'filter.frequency',
+  'filter.q',
+]);
+
 export function markPlayed(instrument: Instrument, decayEnabled: boolean): Instrument {
   if (!decayEnabled || instrument.decay.isDead) return { ...instrument, lastPlayedAt: Date.now() };
   const playCount = instrument.decay.playCount + 1;
@@ -44,11 +54,13 @@ export function applyDecayToParams(
 }
 
 function readPath(target: { synth: SynthParams; filter: FilterParams }, path: string): unknown {
+  if (!SAFE_DECAY_PATHS.has(path)) return undefined;
   const [root, key] = path.split('.') as ['synth' | 'filter', keyof SynthParams & keyof FilterParams];
   return root in target ? target[root][key] : undefined;
 }
 
 function writePath(target: { synth: SynthParams; filter: FilterParams }, path: string, value: number): void {
+  if (!SAFE_DECAY_PATHS.has(path)) return;
   const [root, key] = path.split('.') as ['synth' | 'filter', keyof SynthParams & keyof FilterParams];
   if (root === 'synth' && key in target.synth) {
     (target.synth as unknown as Record<string, unknown>)[key] = value;

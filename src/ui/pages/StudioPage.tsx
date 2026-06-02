@@ -4,6 +4,7 @@ import { exportSongWav } from '../../engine/WavExport';
 import { useAppStore } from '../../stores/appStoreHooks';
 import { createEmptySong } from '../../stores/appStoreModel';
 import type { Note, ScaleType, Song } from '../../types';
+import { clampInteger } from '../../utils/clamp';
 import { createId } from '../../utils/id';
 import { midiToNoteName } from '../../utils/midi';
 import { getGridNotes } from '../../utils/scales';
@@ -30,6 +31,14 @@ export function StudioPage() {
   function updateSong(patch: Partial<Song>) {
     const current = ensureSong();
     saveSong({ ...current, ...patch });
+  }
+
+  function updateTempo(value: string) {
+    updateSong({ tempo: clampInteger(Number(value), 60, 240) });
+  }
+
+  function updateBarCount(value: string) {
+    updateSong({ barCount: clampInteger(Number(value), 1, 16) });
   }
 
   function addTrack() {
@@ -73,7 +82,7 @@ export function StudioPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${song.name || 'unknown-instruments'}.wav`;
+    anchor.download = `${safeFileStem(song.name) || 'unknown-instruments'}.wav`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -102,8 +111,8 @@ export function StudioPage() {
           {/* Transport */}
           <div className="transport-bar">
             <input className="input" style={{ maxWidth: 180 }} value={song.name} onChange={(event) => updateSong({ name: event.target.value })} />
-            <label>BPM <input type="number" min="60" max="240" value={song.tempo} onChange={(event) => updateSong({ tempo: Number(event.target.value) })} style={{ width: 60 }} /></label>
-            <label>Bars <input type="number" min="1" max="16" value={song.barCount} onChange={(event) => updateSong({ barCount: Number(event.target.value) })} style={{ width: 52 }} /></label>
+            <label>BPM <input type="number" min="60" max="240" value={song.tempo} onChange={(event) => updateTempo(event.target.value)} style={{ width: 60 }} /></label>
+            <label>Bars <input type="number" min="1" max="16" value={song.barCount} onChange={(event) => updateBarCount(event.target.value)} style={{ width: 52 }} /></label>
             <select value={song.scale} onChange={(event) => updateSong({ scale: event.target.value as ScaleType })}>
               {['chromatic', 'major', 'minor', 'pentatonic_major', 'pentatonic_minor', 'dorian', 'mixolydian', 'blues', 'whole_tone'].map((scale) => <option key={scale} value={scale}>{scale}</option>)}
             </select>
@@ -178,4 +187,15 @@ export function StudioPage() {
       )}
     </div>
   );
+}
+
+function safeFileStem(value: string): string {
+  return [...value.trim()]
+    .map((char) => (isUnsafeFileChar(char) ? '-' : char))
+    .join('')
+    .slice(0, 80);
+}
+
+function isUnsafeFileChar(char: string): boolean {
+  return '<>:"/\\|?*'.includes(char) || char.charCodeAt(0) < 32;
 }

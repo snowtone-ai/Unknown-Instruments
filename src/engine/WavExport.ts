@@ -1,16 +1,19 @@
 import * as Tone from 'tone';
 import type { Instrument, Song } from '../types';
+import { clamp } from '../utils/clamp';
 import { midiToNoteName } from '../utils/midi';
 import { createEffect, createFilter, createSynth } from './SynthFactory';
 import { audioBufferToWav } from './audioBufferToWav';
 
 export function calculateSongDurationSeconds(song: Song): number {
+  const tempo = clamp(song.tempo, 60, 240);
   const beats = song.barCount * song.timeSignature[0];
-  return beats * (60 / song.tempo);
+  return beats * (60 / tempo);
 }
 
 export async function exportSongWav(song: Song, instruments: Instrument[]): Promise<Blob> {
   const duration = calculateSongDurationSeconds(song);
+  const tempo = clamp(song.tempo, 60, 240);
   const instrumentMap = new Map(instruments.map((instrument) => [instrument.id, instrument]));
   const buffer = await Tone.Offline(() => {
     for (const track of activeTracks(song)) {
@@ -21,8 +24,8 @@ export async function exportSongWav(song: Song, instruments: Instrument[]): Prom
       const effects = instrument.effects.map(createEffect);
       (synth as unknown as { chain?: (...nodes: unknown[]) => void }).chain?.(filter, ...effects, Tone.getDestination());
       for (const note of track.notes) {
-        const time = note.startBeat * (60 / song.tempo);
-        const noteDuration = note.duration * (60 / song.tempo);
+        const time = note.startBeat * (60 / tempo);
+        const noteDuration = note.duration * (60 / tempo);
         synth.triggerAttackRelease(midiToNoteName(note.pitch), noteDuration, time, note.velocity * track.volume);
       }
     }

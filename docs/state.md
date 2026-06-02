@@ -2,7 +2,7 @@
 
 ## Current
 - Branch: `main` until first implementation branch is created.
-- Active task: implementation hardening complete
+- Active task: BigTech-style product code review and hardening complete
 - Current executor: Codex
 - Write lock: none
 - Coordinator: CEO Agent
@@ -13,4 +13,4 @@
 - None.
 
 ## Next
-- Ready for human review; see `IMPLEMENTATION_LOG.md`.
+- Ready for session close after final verify, commit, and push; see `IMPLEMENTATION_LOG.md`.

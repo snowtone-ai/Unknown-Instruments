@@ -6,6 +6,7 @@ import { StudioPage } from './ui/pages/StudioPage';
 import { WorkshopPage } from './ui/pages/WorkshopPage';
 import { Navigation, type PageKey } from './ui/common/Navigation';
 import { AppStoreProvider } from './stores/appStore';
+import { ErrorBoundary } from './ui/common/ErrorBoundary';
 
 const pages: Record<PageKey, JSX.Element> = {
   gallery: <GalleryPage />,
@@ -17,12 +18,18 @@ const pages: Record<PageKey, JSX.Element> = {
 export default function App() {
   const [page, setPage] = useState<PageKey>('gallery');
   const [audioReady, setAudioReady] = useState(false);
+  const [audioError, setAudioError] = useState('');
 
   async function startAudio() {
-    const engine = new AudioEngine();
-    await engine.start();
-    engine.dispose();
-    setAudioReady(true);
+    try {
+      setAudioError('');
+      const engine = new AudioEngine();
+      await engine.start();
+      engine.dispose();
+      setAudioReady(true);
+    } catch (error) {
+      setAudioError(error instanceof Error ? error.message : 'Audio start failed.');
+    }
   }
 
   return (
@@ -41,6 +48,7 @@ export default function App() {
               <span>Tap to Begin</span>
             </button>
             <p className="audio-start-hint">ブラウザのオーディオを有効にします</p>
+            {audioError ? <p className="status-line">{audioError}</p> : null}
           </div>
         ) : null}
         <header className="app-header">
@@ -49,7 +57,9 @@ export default function App() {
             <h1>Unknown Instruments</h1>
           </div>
         </header>
-        <section className="page-panel">{pages[page]}</section>
+        <section className="page-panel">
+          <ErrorBoundary key={page}>{pages[page]}</ErrorBoundary>
+        </section>
         <Navigation current={page} onChange={setPage} />
       </main>
     </AppStoreProvider>

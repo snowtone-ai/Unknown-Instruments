@@ -18,4 +18,20 @@ describe('validateAndClampInstrument', () => {
     expect(instrument.visual.elementCount).toBe(12);
     expect(instrument.decay.lifespan).toBe(100);
   });
+
+  it('normalizes unsafe display and decay fields', () => {
+    const instrument = validateAndClampInstrument({
+      instrument: { name: 'x'.repeat(200) },
+      visual: {
+        primary_color: 'url(javascript:alert(1))',
+        accent_color: '#abc',
+      },
+      decay_profile: { primary_decay_target: '__proto__.polluted' },
+    }, 'origin');
+
+    expect(instrument.name).toHaveLength(80);
+    expect(instrument.visual.primaryColor).toBe('#6f6654');
+    expect(instrument.visual.accentColor).toBe('#aabbcc');
+    expect(instrument.decay.decayVectors[0].paramPath).toBe('filter.frequency');
+  });
 });

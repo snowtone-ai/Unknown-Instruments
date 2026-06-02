@@ -1,3 +1,5 @@
+import { normalizeHexColor } from '../utils/color';
+
 /** Deterministic seed from two hex color strings. */
 export function colorSeed(primary: string, accent: string): number {
   let h = 0;
@@ -15,7 +17,7 @@ export function makeId(seed: number, name: string): string {
 }
 
 export function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
+  const h = normalizeHexColor(hex, '#000000').replace('#', '');
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
 

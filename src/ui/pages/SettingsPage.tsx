@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { createBackup, backupFileName, estimateBytes, mergeBackup, parseBackup } from '../../data/exportImport';
 import { useAppStore } from '../../stores/appStoreHooks';
 import type { ScaleType } from '../../types';
 
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+
 export function SettingsPage() {
   const { instruments, songs, settings, updateSettings, replaceCollection, resetAll } = useAppStore();
+  const [dataStatus, setDataStatus] = useState('');
   const apiKeySource = settings.apiKey ? 'Settings local key' : ((import.meta.env.VITE_GEMINI_API_KEY as string | undefined) ? '.env.local VITE key' : 'Not configured');
   const bytes = estimateBytes({ instruments, songs, settings: { ...settings, apiKey: undefined } });
 
@@ -20,8 +24,14 @@ export function SettingsPage() {
 
   async function importJson(file: File | null) {
     if (!file) return;
-    const backup = parseBackup(await file.text());
-    replaceCollection(mergeBackup({ instruments, songs }, backup));
+    try {
+      if (file.size > MAX_IMPORT_BYTES) throw new Error('20MB以下のバックアップJSONを選択してください。');
+      const backup = parseBackup(await file.text());
+      replaceCollection(mergeBackup({ instruments, songs }, backup));
+      setDataStatus(`Import complete: ${backup.instruments.length} instruments / ${backup.songs.length} songs`);
+    } catch (error) {
+      setDataStatus(error instanceof Error ? error.message : 'Importに失敗しました。');
+    }
   }
 
   return (
@@ -70,9 +80,10 @@ export function SettingsPage() {
             <button className="secondary-button" type="button" onClick={exportJson}>Export</button>
             <label className="secondary-button file-button">
               Import
-              <input type="file" accept="application/json" onChange={(event) => void importJson(event.target.files?.[0] ?? null)} />
+              <input type="file" accept="application/json" onChange={(event) => { void importJson(event.target.files?.[0] ?? null); event.currentTarget.value = ''; }} />
             </label>
           </div>
+          {dataStatus ? <p className="status-line">{dataStatus}</p> : null}
           <div style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
             <button className="secondary-button danger" type="button" onClick={() => confirm('全データを削除しますか？この操作は取り消せません。') && resetAll()}>
               Delete All Data

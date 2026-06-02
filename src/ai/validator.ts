@@ -1,6 +1,17 @@
 import type { DecayCharacter, EffectParams, EffectType, FilterType, Instrument, InteractionType, OscillatorType, SynthType, TextureType, VisualTemplate } from '../types';
 import { clamp, clampInteger } from '../utils/clamp';
+import { normalizeHexColor } from '../utils/color';
 import { createId } from '../utils/id';
+
+const SAFE_DECAY_PATHS = [
+  'synth.attack',
+  'synth.decay',
+  'synth.sustain',
+  'synth.release',
+  'synth.baseFrequency',
+  'filter.frequency',
+  'filter.q',
+] as const;
 
 function pick<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
@@ -10,15 +21,15 @@ function asNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
-function asString(value: unknown, fallback: string): string {
+function asString(value: unknown, fallback: string, maxLength = 240): string {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : fallback;
+  return trimmed.length > 0 ? trimmed.slice(0, maxLength) : fallback;
 }
 
 function asStringArray(value: unknown, fallback: string[]): string[] {
   return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 8)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim().slice(0, 80)).slice(0, 8)
     : fallback;
 }
 
@@ -56,13 +67,13 @@ export function validateAndClampInstrument(raw: unknown, originText: string): In
 
   return {
     id: createId('inst'),
-    name: asString(instrument.name, 'Auralith（オーラリス）'),
-    nameEtymology: asString(instrument.name_etymology ?? instrument.nameEtymology, 'aural と lith を合わせた造語'),
-    description: asString(instrument.description, '薄い結晶板と中空の胴体を持つ架空の楽器。触れる位置で倍音が変わる。'),
+    name: asString(instrument.name, 'Auralith（オーラリス）', 80),
+    nameEtymology: asString(instrument.name_etymology ?? instrument.nameEtymology, 'aural と lith を合わせた造語', 160),
+    description: asString(instrument.description, '薄い結晶板と中空の胴体を持つ架空の楽器。触れる位置で倍音が変わる。', 500),
     materials: asStringArray(instrument.materials, ['結晶化した樹脂', '古い真鍮', '黒檀']),
-    shape: asString(instrument.shape, '非対称な標本のような形状'),
-    playingMethod: asString(instrument.playing_method ?? instrument.playingMethod, '表面を撫でる、弾く、または長押しして鳴らす'),
-    originText,
+    shape: asString(instrument.shape, '非対称な標本のような形状', 240),
+    playingMethod: asString(instrument.playing_method ?? instrument.playingMethod, '表面を撫でる、弾く、または長押しして鳴らす', 240),
+    originText: asString(originText, 'unknown sound', 500),
     synth: {
       type: pick<SynthType>(synth.type, ['fm', 'am', 'mono', 'pluck', 'metal'], 'fm'),
       oscillatorType: pick<OscillatorType>(synth.oscillator_type ?? synth.oscillatorType, ['sine', 'sawtooth', 'square', 'triangle'], 'sine'),
@@ -87,22 +98,22 @@ export function validateAndClampInstrument(raw: unknown, originText: string): In
     effects: (Array.isArray(source.effects) ? source.effects : []).map((effect) => toCamelEffect(asObject(effect))).slice(0, 4),
     visual: {
       template: pick<VisualTemplate>(visual.template, ['stringed', 'wind', 'percussion', 'crystalline', 'organic', 'spiral'], 'crystalline'),
-      primaryColor: asString(visual.primary_color ?? visual.primaryColor, '#6f6654'),
-      accentColor: asString(visual.accent_color ?? visual.accentColor, '#d6b66f'),
+      primaryColor: normalizeHexColor(visual.primary_color ?? visual.primaryColor, '#6f6654'),
+      accentColor: normalizeHexColor(visual.accent_color ?? visual.accentColor, '#d6b66f'),
       texture: pick<TextureType>(visual.texture, ['smooth', 'rough', 'metallic', 'organic', 'crystalline'], 'crystalline'),
       complexity: clampInteger(asNumber(visual.complexity, 3), 1, 5),
       elementCount: clampInteger(asNumber(visual.element_count ?? visual.elementCount, 7), 1, 12),
-      formDescription: asString(visual.form_description ?? visual.formDescription, '標本箱に収められた未知の結晶楽器'),
+      formDescription: asString(visual.form_description ?? visual.formDescription, '標本箱に収められた未知の結晶楽器', 240),
     },
     interaction: {
       type: pick<InteractionType>(interaction.type, ['keys', 'slide', 'tap', 'drag', 'bow'], 'keys'),
-      description: asString(interaction.description, '画面上の演奏UIを操作して音を出す'),
+      description: asString(interaction.description, '画面上の演奏UIを操作して音を出す', 240),
     },
     decay: {
       lifespan,
       playCount: 0,
       decayVectors: [{
-        paramPath: asString(decayProfile.primary_decay_target ?? decayProfile.primaryDecayTarget, 'filter.frequency'),
+        paramPath: pick(decayProfile.primary_decay_target ?? decayProfile.primaryDecayTarget, SAFE_DECAY_PATHS, 'filter.frequency'),
         direction: -1,
         weight: 0.5,
       }],

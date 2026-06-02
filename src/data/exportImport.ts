@@ -1,4 +1,5 @@
 import type { AppBackup, AppSettings, Instrument, Song } from '../types';
+import { sanitizeBackupSettings, sanitizeInstruments, sanitizeSongs } from './sanitize';
 
 export function createBackup(instruments: Instrument[], songs: Song[], settings: AppSettings): AppBackup {
   return {
@@ -25,7 +26,18 @@ export function parseBackup(raw: string): AppBackup {
   if (parsed.version !== 1 || !Array.isArray(parsed.instruments) || !Array.isArray(parsed.songs) || !parsed.settings) {
     throw new Error('Unknown Instruments のバックアップJSONではありません。');
   }
-  return parsed as AppBackup;
+  return {
+    version: 1,
+    exportedAt: typeof parsed.exportedAt === 'number' && Number.isFinite(parsed.exportedAt) ? parsed.exportedAt : Date.now(),
+    instruments: sanitizeInstruments(parsed.instruments),
+    songs: sanitizeSongs(parsed.songs),
+    settings: sanitizeBackupSettings(parsed.settings, {
+      decayEnabled: false,
+      timeSensitivityEnabled: false,
+      defaultScale: 'pentatonic_major',
+      language: 'ja',
+    }),
+  };
 }
 
 export function mergeBackup(

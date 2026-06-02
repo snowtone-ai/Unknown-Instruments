@@ -47,9 +47,9 @@ Unknown Instruments is a local-only "sound artifact lab." Users type a text prom
 | `src/ui/gallery/` | InstrumentTile, RuinsView, LineageTree | Displayed inside GalleryPage |
 | `src/ui/common/` | Navigation | 4-tab nav rendered by `App` |
 | `src/stores/` | `AppStoreProvider`, `useAppStore`, store model helpers | Persists via `HybridStorageAdapter`; holds instruments, songs, settings |
-| `src/data/` | `HybridStorageAdapter`, `IndexedDbStorageAdapter`, exportImport | Routes to IndexedDB for payloads ≥ threshold; smaller payloads use localStorage |
+| `src/data/` | `HybridStorageAdapter`, `IndexedDbStorageAdapter`, exportImport, sanitize | Routes to IndexedDB for payloads ≥ threshold; smaller payloads use localStorage; imported/hydrated records are sanitized |
 | `src/types/` | All domain TypeScript interfaces | `Instrument` is the central contract; must stay in sync with validator |
-| `src/utils/` | decay math, MIDI conversion, scales, ID generation | Stateless pure functions; keep deterministic |
+| `src/utils/` | decay math, MIDI conversion, scales, ID generation, color normalization | Stateless pure functions; keep deterministic |
 | `scripts/` | verify, audit helpers | `verify.mjs` is the single quality gate |
 
 ---
@@ -76,6 +76,7 @@ Unknown Instruments is a local-only "sound artifact lab." Users type a text prom
 | `useAppStore` | `src/stores/appStoreHooks.ts:4` | Store hook separated from the provider for React Fast Refresh compatibility. |
 | `defaultSettings` / `createEmptySong()` | `src/stores/appStoreModel.ts:9/16` | Shared settings defaults and song factory used by Studio and tests. |
 | `HybridStorageAdapter` | `src/data/storage.ts:27` | Auto-routes to IndexedDB for large payloads; falls back to localStorage. |
+| `sanitizeInstrument` / `sanitizeSong` | `src/data/sanitize.ts:84/174` | Defensive import and hydration boundary for user-edited or corrupted local data. |
 | `InstrumentRenderer` | `src/visual/InstrumentRenderer.tsx:18` | SVG renderer; applies `DecayOverlay` based on `calculateDecayFactor`. |
 | `renderTemplate()` | `src/visual/InstrumentRenderer.tsx:36` | Switch on `visual.template` → one of 6 SVG template components. |
 | `calculateDecayFactor()` | `src/utils/decay.ts:1` | Quadratic `p²` decay; `p = playCount / lifespan`. Returns 0–1. |
@@ -135,6 +136,7 @@ AppStoreProvider (React effect on state change)
       [small] → localStorage.setItem(key, JSON)
 AppStoreProvider (boot hydration)
   → HybridStorageAdapter.load() × 3 (instruments, songs, settings)
+  → sanitizeInstruments / sanitizeSongs / sanitizeSettings
 ```
 
 ---
@@ -146,7 +148,9 @@ AppStoreProvider (boot hydration)
 | `tests/clamp.test.ts` | Numeric clamping utilities |
 | `tests/decayEngine.test.ts` | `calculateDecayFactor` math |
 | `tests/exportImport.test.ts` | JSON backup/restore round-trip |
+| `tests/geminiClient.test.ts` | Gemini structured output request shape |
 | `tests/midi.test.ts` | MIDI ↔ note name conversion (`midiToNoteName`) |
+| `tests/storage.test.ts` | malformed localStorage JSON recovery |
 | `tests/songDecay.test.ts` | Song-level decay logic |
 | `tests/timeSensitivity.test.ts` | Time-dependent decay (simulated or real — uncertain) |
 | `tests/validator.test.ts` | `validateAndClampInstrument` edge cases (**critical**: guards AI output) |

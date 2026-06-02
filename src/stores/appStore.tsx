@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { AppSettings, Instrument, Song } from '../types';
 import { storage } from '../data/storage';
+import { sanitizeInstruments, sanitizeSettings, sanitizeSongs } from '../data/sanitize';
 import { AppStoreContext, INSTRUMENTS_KEY, SETTINGS_KEY, SONGS_KEY, defaultSettings, type AppStore } from './appStoreModel';
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
@@ -13,14 +14,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     void Promise.all([
-      storage.load<Instrument[]>(INSTRUMENTS_KEY),
-      storage.load<Song[]>(SONGS_KEY),
-      storage.load<Partial<AppSettings>>(SETTINGS_KEY),
+      safeLoad<Instrument[]>(INSTRUMENTS_KEY),
+      safeLoad<Song[]>(SONGS_KEY),
+      safeLoad<Partial<AppSettings>>(SETTINGS_KEY),
     ]).then(([loadedInstruments, loadedSongs, loadedSettings]) => {
       if (!alive) return;
-      setInstruments(loadedInstruments ?? []);
-      setSongs(loadedSongs ?? []);
-      setSettings({ ...defaultSettings, ...(loadedSettings ?? {}) });
+      setInstruments(sanitizeInstruments(loadedInstruments));
+      setSongs(sanitizeSongs(loadedSongs));
+      setSettings(sanitizeSettings(loadedSettings, defaultSettings));
       setHydrated(true);
     });
     return () => { alive = false; };
@@ -28,17 +29,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(INSTRUMENTS_KEY, instruments);
+    void storage.save(INSTRUMENTS_KEY, instruments).catch(() => undefined);
   }, [hydrated, instruments]);
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(SONGS_KEY, songs);
+    void storage.save(SONGS_KEY, songs).catch(() => undefined);
   }, [hydrated, songs]);
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(SETTINGS_KEY, settings);
+    void storage.save(SETTINGS_KEY, settings).catch(() => undefined);
   }, [hydrated, settings]);
 
   const saveInstrument = useCallback((instrument: Instrument) => {
@@ -98,4 +99,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }), [deleteInstrument, deleteSong, hydrated, instruments, replaceCollection, resetAll, saveInstrument, saveSong, selectedInstrumentId, settings, updateSettings, songs]);
 
   return <AppStoreContext.Provider value={value}>{children}</AppStoreContext.Provider>;
+}
+
+function safeLoad<T>(key: string): Promise<T | null> {
+  return storage.load<T>(key).catch(() => null);
 }
