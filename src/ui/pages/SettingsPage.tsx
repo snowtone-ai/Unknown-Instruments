@@ -28,33 +28,55 @@ export function SettingsPage() {
     <div>
       <h2>Settings</h2>
       <div className="card-grid">
+        {/* Gemini API */}
         <article className="specimen-card">
           <h3>Gemini API</h3>
-          <p className="muted">Source: {apiKeySource}</p>
+          <p className="muted" style={{ marginBottom: 'var(--space-md)' }}>Source: {apiKeySource}</p>
           <label className="form-row">
-            <span>Local API key</span>
+            <span>API Key</span>
             <input className="input" type="password" value={settings.apiKey} onChange={(event) => updateSettings({ apiKey: event.target.value })} placeholder="AIza..." />
           </label>
         </article>
+
+        {/* Playback */}
         <article className="specimen-card">
-          <h3>Decay</h3>
-          <label><input type="checkbox" checked={settings.decayEnabled} onChange={(event) => updateSettings({ decayEnabled: event.target.checked })} /> Decay</label>
-          <label><input type="checkbox" checked={settings.timeSensitivityEnabled} onChange={(event) => updateSettings({ timeSensitivityEnabled: event.target.checked })} /> Time sensitivity</label>
-          <label className="form-row">
-            <span>Default scale</span>
-            <select value={settings.defaultScale} onChange={(event) => updateSettings({ defaultScale: event.target.value as ScaleType })}>
-              {['chromatic', 'major', 'minor', 'pentatonic_major', 'pentatonic_minor', 'dorian', 'mixolydian', 'blues', 'whole_tone'].map((scale) => <option key={scale} value={scale}>{scale}</option>)}
-            </select>
-          </label>
+          <h3>Playback</h3>
+          <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontSize: 'var(--font-sm)', color: 'var(--color-text-secondary)' }}>
+              <input type="checkbox" checked={settings.decayEnabled} onChange={(event) => updateSettings({ decayEnabled: event.target.checked })} />
+              Decay（演奏による劣化）
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontSize: 'var(--font-sm)', color: 'var(--color-text-secondary)' }}>
+              <input type="checkbox" checked={settings.timeSensitivityEnabled} onChange={(event) => updateSettings({ timeSensitivityEnabled: event.target.checked })} />
+              Time Sensitivity（時間感応）
+            </label>
+            <label className="form-row">
+              <span>Default Scale</span>
+              <select value={settings.defaultScale} onChange={(event) => updateSettings({ defaultScale: event.target.value as ScaleType })}>
+                {['chromatic', 'major', 'minor', 'pentatonic_major', 'pentatonic_minor', 'dorian', 'mixolydian', 'blues', 'whole_tone'].map((scale) => <option key={scale} value={scale}>{scale}</option>)}
+              </select>
+            </label>
+          </div>
         </article>
+
+        {/* Data */}
         <article className="specimen-card">
           <h3>Data</h3>
-          <p className="muted">Instruments: {instruments.length} / Songs: {songs.length}</p>
-          <p className="muted">Storage estimate: {(bytes / 1024).toFixed(1)} KB</p>
+          <div style={{ display: 'grid', gap: 'var(--space-xs)', marginBottom: 'var(--space-md)' }}>
+            <span className="muted">Instruments: {instruments.length} / Songs: {songs.length}</span>
+            <span className="muted">Storage: {(bytes / 1024).toFixed(1)} KB</span>
+          </div>
           <div className="button-row">
-            <button className="secondary-button" type="button" onClick={exportJson}>Export JSON</button>
-            <label className="secondary-button file-button">Import JSON<input type="file" accept="application/json" onChange={(event) => void importJson(event.target.files?.[0] ?? null)} /></label>
-            <button className="secondary-button danger" type="button" onClick={() => confirm('全データを削除しますか？') && resetAll()}>Delete all</button>
+            <button className="secondary-button" type="button" onClick={exportJson}>Export</button>
+            <label className="secondary-button file-button">
+              Import
+              <input type="file" accept="application/json" onChange={(event) => void importJson(event.target.files?.[0] ?? null)} />
+            </label>
+          </div>
+          <div style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
+            <button className="secondary-button danger" type="button" onClick={() => confirm('全データを削除しますか？この操作は取り消せません。') && resetAll()}>
+              Delete All Data
+            </button>
           </div>
         </article>
       </div>

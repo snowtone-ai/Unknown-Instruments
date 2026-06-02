@@ -4,17 +4,17 @@ export function ParameterPanel({ instrument, onChange }: { instrument: Instrumen
   return (
     <div className="control-grid">
       <label>
-        Synth
+        Synth Type
         <select value={instrument.synth.type} onChange={(event) => onChange({ ...instrument, synth: { ...instrument.synth, type: event.target.value as SynthType } })}>
-          {['fm', 'am', 'mono', 'pluck', 'metal'].map((type) => <option key={type} value={type}>{type}</option>)}
+          {['fm', 'am', 'mono', 'pluck', 'metal'].map((type) => <option key={type} value={type}>{type.toUpperCase()}</option>)}
         </select>
       </label>
       <label>
-        Filter
+        Filter ({Math.round(instrument.filter.frequency)} Hz)
         <input type="range" min="80" max="12000" value={instrument.filter.frequency} onChange={(event) => onChange({ ...instrument, filter: { ...instrument.filter, frequency: Number(event.target.value) } })} />
       </label>
       <label>
-        Attack
+        Attack ({instrument.synth.attack.toFixed(3)}s)
         <input type="range" min="0.001" max="3" step="0.001" value={instrument.synth.attack} onChange={(event) => onChange({ ...instrument, synth: { ...instrument.synth, attack: Number(event.target.value) } })} />
       </label>
       <label>

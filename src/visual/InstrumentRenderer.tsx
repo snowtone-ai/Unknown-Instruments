@@ -7,7 +7,7 @@ import { PercussionTemplate } from './templates/PercussionTemplate';
 import { SpiralTemplate } from './templates/SpiralTemplate';
 import { StringedTemplate } from './templates/StringedTemplate';
 import { WindTemplate } from './templates/WindTemplate';
-import { TextureFilters } from './textureFilters';
+import { colorSeed, makeId, withAlpha } from './visualUtils';
 
 interface InstrumentRendererProps {
   instrument?: Instrument;
@@ -16,18 +16,37 @@ interface InstrumentRendererProps {
 }
 
 export function InstrumentRenderer({ instrument, visual, compact = false }: InstrumentRendererProps) {
-  const visualParams = visual ?? instrument?.visual;
-  if (!visualParams) return null;
+  const v = visual ?? instrument?.visual;
+  if (!v) return null;
   const decay = instrument ? calculateDecayFactor(instrument.decay.playCount, instrument.decay.lifespan) : 0;
-  const opacity = instrument?.decay.isDead ? 0.46 : 1;
+  const isDead = instrument?.decay.isDead ?? false;
+  const opacity = isDead ? 0.42 : 1;
+  const seed = colorSeed(v.primaryColor, v.accentColor);
+  const bgId = makeId(seed, 'bg');
 
   return (
-    <svg className={compact ? 'instrument-svg compact' : 'instrument-svg'} viewBox="0 0 200 210" role="img" aria-label={instrument?.name ?? visualParams.formDescription}>
-      <TextureFilters />
-      <rect x="8" y="8" width="184" height="194" rx="8" fill="#171612" stroke="rgba(242,237,228,0.16)" />
+    <svg
+      className={`instrument-svg${compact ? ' compact' : ''}${isDead ? ' dead' : ''}`}
+      viewBox="0 0 200 210"
+      role="img"
+      aria-label={instrument?.name ?? v.formDescription}
+    >
+      <defs>
+        <radialGradient id={bgId} cx="50%" cy="46%" r="50%">
+          <stop offset="0%" stopColor={withAlpha(v.primaryColor, 0.07)} />
+          <stop offset="50%" stopColor={withAlpha(v.accentColor, 0.025)} />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+      </defs>
+      {/* Background with instrument-specific ambient color */}
+      <rect x="4" y="4" width="192" height="202" rx="10" fill="#100f0d" />
+      <rect x="4" y="4" width="192" height="202" rx="10" fill={`url(#${bgId})`} />
+      <rect x="4" y="4" width="192" height="202" rx="10" fill="none" stroke="rgba(242,237,228,0.09)" strokeWidth="0.5" />
+      {/* Instrument visual */}
       <g opacity={opacity}>
-        {renderTemplate(visualParams)}
+        {renderTemplate(v)}
       </g>
+      {/* Decay overlay */}
       {instrument ? <DecayOverlay progress={decay} character={instrument.decay.decayCharacter} /> : null}
     </svg>
   );

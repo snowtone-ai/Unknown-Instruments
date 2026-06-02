@@ -30,12 +30,22 @@ export default function App() {
       <main className="app-shell">
         {!audioReady ? (
           <div className="audio-start">
-            <button className="primary-button" type="button" onClick={() => void startAudio()}>Start Audio</button>
+            <div className="ring-1" />
+            <div className="ring-2" />
+            <div className="ring-3" />
+            <div className="audio-start-brand">
+              <p className="eyebrow">Sound Artifact Lab</p>
+              <h1>Unknown Instruments</h1>
+            </div>
+            <button className="start-button" type="button" onClick={() => void startAudio()}>
+              <span>Tap to Begin</span>
+            </button>
+            <p className="audio-start-hint">ブラウザのオーディオを有効にします</p>
           </div>
         ) : null}
         <header className="app-header">
           <div>
-            <p className="eyebrow">Local-only sound artifact lab</p>
+            <p className="eyebrow">Sound Artifact Lab</p>
             <h1>Unknown Instruments</h1>
           </div>
         </header>

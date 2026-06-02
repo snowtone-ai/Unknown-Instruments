@@ -20,15 +20,22 @@ export function SnapshotPanel({ instrument, onChange }: { instrument: Instrument
   }
 
   return (
-    <div>
-      <button type="button" className="secondary-button" onClick={saveSnapshot}>Save snapshot</button>
-      <div className="snapshot-list">
-        {instrument.snapshots.map((snapshot) => (
-          <button key={snapshot.id} type="button" onClick={() => onChange({ ...instrument, synth: snapshot.synth, filter: snapshot.filter, effects: snapshot.effects, visual: snapshot.visual })}>
-            {snapshot.label} ({snapshot.playCountAtCapture})
-          </button>
-        ))}
+    <div style={{ marginTop: 'var(--space-md)' }}>
+      <div className="button-row">
+        <button type="button" className="secondary-button" onClick={saveSnapshot}>Save Snapshot</button>
+        {instrument.snapshots.length > 0 && (
+          <span className="muted">{instrument.snapshots.length} saved</span>
+        )}
       </div>
+      {instrument.snapshots.length > 0 && (
+        <div className="snapshot-list">
+          {instrument.snapshots.map((snapshot) => (
+            <button key={snapshot.id} type="button" onClick={() => onChange({ ...instrument, synth: snapshot.synth, filter: snapshot.filter, effects: snapshot.effects, visual: snapshot.visual })}>
+              {snapshot.label} · play #{snapshot.playCountAtCapture}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
