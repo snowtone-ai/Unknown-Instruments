@@ -22,7 +22,13 @@ export function backupFileName(date = new Date()): string {
 }
 
 export function parseBackup(raw: string): AppBackup {
-  const parsed = JSON.parse(raw) as Partial<AppBackup>;
+  if (raw.length > 50_000_000) throw new Error('バックアップファイルが大きすぎます (50MB上限)。');
+  let parsed: Partial<AppBackup>;
+  try {
+    parsed = JSON.parse(raw) as Partial<AppBackup>;
+  } catch {
+    throw new Error('JSONの解析に失敗しました。正しいバックアップファイルを選択してください。');
+  }
   if (parsed.version !== 1 || !Array.isArray(parsed.instruments) || !Array.isArray(parsed.songs) || !parsed.settings) {
     throw new Error('Unknown Instruments のバックアップJSONではありません。');
   }

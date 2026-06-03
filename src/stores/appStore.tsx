@@ -29,17 +29,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(INSTRUMENTS_KEY, instruments).catch(() => undefined);
+    void storage.save(INSTRUMENTS_KEY, instruments).catch(logStorageError);
   }, [hydrated, instruments]);
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(SONGS_KEY, songs).catch(() => undefined);
+    void storage.save(SONGS_KEY, songs).catch(logStorageError);
   }, [hydrated, songs]);
 
   useEffect(() => {
     if (!hydrated) return;
-    void storage.save(SETTINGS_KEY, settings).catch(() => undefined);
+    void storage.save(SETTINGS_KEY, settings).catch(logStorageError);
   }, [hydrated, settings]);
 
   const saveInstrument = useCallback((instrument: Instrument) => {
@@ -102,5 +102,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 }
 
 function safeLoad<T>(key: string): Promise<T | null> {
-  return storage.load<T>(key).catch(() => null);
+  return storage.load<T>(key).catch((error) => {
+    logStorageError(error);
+    return null;
+  });
+}
+
+function logStorageError(error: unknown): void {
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn('[Unknown-Instruments] storage error:', error instanceof Error ? error.message : error);
+  }
 }

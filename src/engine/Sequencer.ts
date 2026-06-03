@@ -24,7 +24,8 @@ export class Sequencer {
       this.engines.push(engine);
       for (const note of track.notes) {
         const delay = note.startBeat * (60 / tempo) * 1000;
-        const id = window.setTimeout(() => engine.trigger(midiToNoteName(note.pitch), `${note.duration * (60 / tempo)}`, note.velocity * track.volume), delay);
+        const velocity = Math.max(0, Math.min(1, note.velocity * track.volume));
+        const id = window.setTimeout(() => engine.trigger(midiToNoteName(note.pitch), `${note.duration * (60 / tempo)}`, velocity), delay);
         this.timeoutIds.push(id);
       }
     }

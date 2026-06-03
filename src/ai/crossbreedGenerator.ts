@@ -56,5 +56,7 @@ export function generateLocalCrossbreed(parentA: Instrument, parentB: Instrument
 }
 
 function average(a: number | undefined, b: number | undefined): number {
-  return ((a ?? 0) + (b ?? a ?? 0)) / 2;
+  const av = Number.isFinite(a) ? a! : 0;
+  const bv = Number.isFinite(b) ? b! : av;
+  return (av + bv) / 2;
 }

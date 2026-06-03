@@ -8,7 +8,14 @@ export interface StorageAdapter {
 export class LocalStorageAdapter implements StorageAdapter {
   async save<T>(key: string, data: T): Promise<void> {
     if (!('localStorage' in globalThis)) return;
-    localStorage.setItem(key, JSON.stringify(data));
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.code === 22)) {
+        throw new Error(`localStorage quota exceeded while saving "${key}".`);
+      }
+      throw error;
+    }
   }
 
   async load<T>(key: string): Promise<T | null> {
@@ -52,6 +59,7 @@ export class HybridStorageAdapter implements StorageAdapter {
         return;
       } catch (error) {
         if (!('indexedDB' in globalThis)) throw error;
+        // localStorage full — fall through to IndexedDB
       }
     }
     if (!('indexedDB' in globalThis)) {
@@ -60,7 +68,11 @@ export class HybridStorageAdapter implements StorageAdapter {
     }
     const { IndexedDbStorageAdapter } = await import('./indexedDbStorage');
     await new IndexedDbStorageAdapter().save(key, data);
-    if ('localStorage' in globalThis) localStorage.setItem(`${this.largePrefix}${key}`, '1');
+    try {
+      if ('localStorage' in globalThis) localStorage.setItem(`${this.largePrefix}${key}`, '1');
+    } catch {
+      // marker write failed (quota), but data is safe in IndexedDB
+    }
   }
 
   async load<T>(key: string): Promise<T | null> {

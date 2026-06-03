@@ -5,7 +5,8 @@ export function midiToFrequency(note: number): number {
 
 export function frequencyToMidi(frequency: number): number {
   if (!Number.isFinite(frequency) || frequency <= 0) return 69;
-  return Math.round(69 + 12 * Math.log2(frequency / 440));
+  const raw = Math.round(69 + 12 * Math.log2(frequency / 440));
+  return Math.max(0, Math.min(127, raw));
 }
 
 export function midiToNoteName(note: number): string {

@@ -15,24 +15,33 @@ export async function exportSongWav(song: Song, instruments: Instrument[]): Prom
   const duration = calculateSongDurationSeconds(song);
   const tempo = clamp(song.tempo, 60, 240);
   const instrumentMap = new Map(instruments.map((instrument) => [instrument.id, instrument]));
-  const buffer = await Tone.Offline(() => {
-    for (const track of activeTracks(song)) {
-      const instrument = instrumentMap.get(track.instrumentId);
-      if (!instrument) continue;
-      const synth = createSynth(instrument.synth);
-      const filter = createFilter(instrument.filter);
-      const effects = instrument.effects.map(createEffect);
-      (synth as unknown as { chain?: (...nodes: unknown[]) => void }).chain?.(filter, ...effects, Tone.getDestination());
-      for (const note of track.notes) {
-        const time = note.startBeat * (60 / tempo);
-        const noteDuration = note.duration * (60 / tempo);
-        synth.triggerAttackRelease(midiToNoteName(note.pitch), noteDuration, time, note.velocity * track.volume);
+  const disposables: Array<{ dispose: () => void }> = [];
+  try {
+    const buffer = await Tone.Offline(() => {
+      for (const track of activeTracks(song)) {
+        const instrument = instrumentMap.get(track.instrumentId);
+        if (!instrument) continue;
+        const synth = createSynth(instrument.synth);
+        const filter = createFilter(instrument.filter);
+        const effects = instrument.effects.map(createEffect);
+        disposables.push(synth, filter, ...effects);
+        (synth as unknown as { chain?: (...nodes: unknown[]) => void }).chain?.(filter, ...effects, Tone.getDestination());
+        for (const note of track.notes) {
+          const time = note.startBeat * (60 / tempo);
+          const noteDuration = note.duration * (60 / tempo);
+          const velocity = Math.max(0, Math.min(1, note.velocity * track.volume));
+          synth.triggerAttackRelease(midiToNoteName(note.pitch), noteDuration, time, velocity);
+        }
       }
+    }, duration);
+    const audioBuffer = buffer.get();
+    if (!audioBuffer) throw new Error('WAV export failed to render audio.');
+    return audioBufferToWav(audioBuffer);
+  } finally {
+    for (const node of disposables) {
+      try { node.dispose(); } catch { /* offline context nodes may already be disposed */ }
     }
-  }, duration);
-  const audioBuffer = buffer.get();
-  if (!audioBuffer) throw new Error('WAV export failed to render audio.');
-  return audioBufferToWav(audioBuffer);
+  }
 }
 
 function activeTracks(song: Song) {

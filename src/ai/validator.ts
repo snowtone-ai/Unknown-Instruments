@@ -34,7 +34,16 @@ function asStringArray(value: unknown, fallback: string[]): string[] {
 }
 
 function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const obj = value as Record<string, unknown>;
+  if ('__proto__' in obj || 'constructor' in obj || 'prototype' in obj) {
+    const safe: Record<string, unknown> = Object.create(null);
+    for (const key of Object.keys(obj)) {
+      if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') safe[key] = obj[key];
+    }
+    return safe;
+  }
+  return obj;
 }
 
 function toCamelEffect(raw: Record<string, unknown>): EffectParams {

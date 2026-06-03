@@ -22,6 +22,7 @@ export function WorkshopPage() {
   const [crossbreedId, setCrossbreedId] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const engineRef = useRef<AudioEngine | null>(null);
+  const generatingRef = useRef(false);
   const { instruments, selectedInstrumentId, settings, saveInstrument } = useAppStore();
   const selectedInstrument = useMemo(
     () => instruments.find((instrument) => instrument.id === selectedInstrumentId) ?? instruments[0],
@@ -35,6 +36,8 @@ export function WorkshopPage() {
       setStatus('音のイメージを入力してください。');
       return;
     }
+    if (generatingRef.current) return;
+    generatingRef.current = true;
     setGenerating(true);
     setStatus('');
     try {
@@ -46,6 +49,7 @@ export function WorkshopPage() {
       saveInstrument(fallback);
       setStatus(error instanceof Error ? `ローカル生成: ${error.message}` : 'ローカル生成を使いました');
     } finally {
+      generatingRef.current = false;
       setGenerating(false);
     }
   }
