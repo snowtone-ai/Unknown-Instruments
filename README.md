@@ -19,9 +19,11 @@
 
 ## 技術スタック
 
-フロントエンド：React 19、TypeScript、Vite 7（高速ビルドツール）、Tone.js（Web Audio APIを使った音響ライブラリ）、Zustand（状態管理ライブラリ）、手続き的SVG（ビジュアル生成）
-データベース：localStorage・IndexedDB（ブラウザ内の永続ストレージ）
-AI・外部API：Google Gemini API（`gemini-2.5-flash`）、オフラインフォールバック生成機能（APIなしでも動作）
+| カテゴリ | 技術・ツール |
+|---|---|
+| フロントエンド | React 19、TypeScript、Vite 7（高速ビルドツール）、Tone.js（Web Audio APIを使った音響ライブラリ）、Zustand（状態管理ライブラリ）、手続き的SVG（ビジュアル生成） |
+| データベース | localStorage・IndexedDB（ブラウザ内の永続ストレージ） |
+| AI・外部API | Google Gemini API（`gemini-2.5-flash`）、オフラインフォールバック生成機能（APIなしでも動作） |
 
 ---
 
