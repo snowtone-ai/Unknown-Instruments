@@ -1,5 +1,11 @@
 # Unknown Instruments
 
+![React](https://img.shields.io/badge/React-19-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Tone.js](https://img.shields.io/badge/Tone.js-Web_Audio-purple)
+![Vite](https://img.shields.io/badge/Vite-7-yellow?logo=vite)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
 > テキストで「架空の音」を書くと、AIが存在しない楽器を生成してブラウザ上で演奏・作曲できる
 
 「霧の中の弦」「錆びた金属が共鳴する音」など、存在しない楽器のイメージをテキストで入力すると、AIが外観・音・名前を生成します。演奏を重ねると楽器が劣化し、やがて廃墟になる「寿命」システムが特徴です。アカウント不要・サーバー不要でブラウザだけで完結します。
@@ -19,11 +25,11 @@
 
 ## 技術スタック
 
-| カテゴリ | 技術・ツール |
+| カテゴリ | 技術 |
 |---|---|
-| フロントエンド | React 19、TypeScript、Vite 7（高速ビルドツール）、Tone.js（Web Audio APIを使った音響ライブラリ）、Zustand（状態管理ライブラリ）、手続き的SVG（ビジュアル生成） |
-| データベース | localStorage・IndexedDB（ブラウザ内の永続ストレージ） |
-| AI・外部API | Google Gemini API（`gemini-2.5-flash`）、オフラインフォールバック生成機能（APIなしでも動作） |
+| フロントエンド | React 19, TypeScript, Vite 7, Tone.js, Zustand, 手続き的SVG |
+| データ永続化 | localStorage + IndexedDB |
+| AI | Gemini API (`gemini-2.5-flash`), オフラインフォールバック |
 
 ---
 
