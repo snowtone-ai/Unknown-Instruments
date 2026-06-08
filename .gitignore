@@ -12,3 +12,14 @@ docs/reference/myself-info.md
 .DS_Store
 Thumbs.db
 *.log
+
+# Next.js build output
+.next/
+
+# GCP service account keys
+service-account*.json
+credentials.json
+.mcp.json
+.claude/worktrees/
+.claude/transcripts/
+.claude/cache/
